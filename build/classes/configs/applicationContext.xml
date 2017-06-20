@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans  
+      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd  
+      http://www.springframework.org/schema/context  
+      http://www.springframework.org/schema/context/spring-context.xsd
+      http://www.springframework.org/schema/tx
+      http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+      http://www.springframework.org/schema/mvc
+      http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd">
+	<!-- 公共配置部分（包括开启自动注解注入、配置数据源、配置事务管理及事务代理等）开始 -->
+	<!-- 开启自动注解注入 -->
+	<context:annotation-config />
+	<context:component-scan base-package="com.suben.*">
+		<context:exclude-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+	<!-- 使用DBCP配置数据源开始 -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${test.jdbc.driverClassName}" />
+		<property name="url" value="${test.jdbc.url}" />
+		<property name="username" value="${test.jdbc.username}" />
+		<property name="password" value="${test.jdbc.password}" />
+	</bean>
+	<!-- 声明并加载jdbc.properties -->
+	<context:property-placeholder location="classpath:configs/jdbc.properties" />
+	<!-- 使用DBCP配置数据源结束 -->
+	<!-- 配置hibernate SessionFactory -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hiberante.format_sql">true</prop>
+				<prop key="hiberante.connection.pool_size">10</prop>
+				<prop key="hibernate.use_outer_join">true</prop>
+				<prop key="hibernate.jdbc.fetch_size">100</prop>
+				<prop key="hibernate.jdbc.batch_size">30</prop>
+				<prop key="connection.autocommit">true</prop>
+			</props>
+		</property>
+		<property name="configLocations">
+			<list>
+				<value>
+					classpath:configs/hibernate.cfg.xml
+				</value>
+			</list>
+		</property>
+	</bean>
+	<!-- 事务管理器 -->
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	<!-- 事务代理类 -->
+	<bean id="transactionBese"
+		class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean"
+		lazy-init="true" abstract="true">
+		<property name="transactionManager" ref="transactionManager"></property>
+		<property name="transactionAttributes">
+			<props>
+				<!-- 事务的传播行为配置 -->
+				<prop key="add*">PROPAGATION_REQUIRED,-Exception</prop>
+				<prop key="save*">PROPAGATION_REQUIRED,-Exception</prop>
+				<prop key="update*">PROPAGATION_REQUIRED,-Exception</prop>
+				<prop key="insert*">PROPAGATION_REQUIRED,-Exception</prop>
+				<prop key="modify*">PROPAGATION_REQUIRED,-Exception</prop>
+				<prop key="delete*">PROPAGATION_REQUIRED,-Exception</prop>
+				<prop key="del*">PROPAGATION_REQUIRED,-Exception</prop>
+				<prop key="get*">PROPAGATION_NEVER</prop>
+			</props>
+		</property>
+	</bean>
+	<!-- 以上公共配置部分（包括开启自动注解注入、配置数据源、配置事务管理及事务代理等）结束 -->
+
+	<!-- MyDao MyService 配置 -->
+	<!-- <bean id="userDao" class="com.suben.dao.impl.UserDao" />
+	<bean id="userServiceBase" class="com.suben.service.UserService" />
+	<bean id="userService" parent="transactionBese">
+		<property name="target" ref="userServiceBase"></property>
+	</bean> -->
+	<!-- 读取配置文件 -->
+	<bean id="propertiesUtil" class="com.suben.utils.PropertiesUtil"></bean>
+</beans>  
